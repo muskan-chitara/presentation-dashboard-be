@@ -5,30 +5,33 @@ from bs4 import BeautifulSoup
 markup = requests.get(f'https://investor.weyerhaeuser.com/events-and-presentations').text
 
 # pass the string to a BeatifulSoup object
-soup = BeautifulSoup(markup, 'lxml')
+soup = BeautifulSoup(markup, 'html.parser')
 # print(type(soup))
 
-# title = soup.select('title')
-# site_name = title[0].text
-# print('Scraping from: ', site_name)
+title = soup.select('title')
+site_name = title[0].text
+print('Scraping from: ', site_name)
 
-#this will hold all the months
-months = []
-month_list = soup.select('.wd_events_month_header')
-print(len(month_list))
+# events_list = soup.select('.wd_events_list')
+# print(len(events_list))
+# print(events_list)
 
-# now we can select elements
-for item in soup.select('.wd_events_month_header'):
-    print(item.text)
-    # month = {}
-    # month['text'] = item.select_one('.text').get_text()
-    # month['author'] = item.select_one('.author').get_text()
+li = soup.find_all('div', {'class': 'item_date wd_event_sidebar_item wd_event_date'})
+print(len(li))
 
-    # # get the tags element
-    # tags = item.select_one('.tags')
+for item in li:
+    print(item.get_text())
 
-    # # get each tag text from the tags element
-    # month['tags'] = [tag.get_text() for tag in tags.select('.tag')]
-    # months.append(month)
-    
-# print(months)
+# dates = soup.find_all('div', {'class': 'wd_events_month_header'})
+# print('length of year: ', len(dates))
+
+# for item in dates:
+#     print(item.get_text())
+
+title = soup.find_all('div', {'class': 'wd_title'})
+print('length of title list: ', len(title))
+
+for item in title:
+    print(item.get_text())
+    title_link = item.findChildren("a" , recursive=False)[0]
+    print('link: ', title_link.attrs['href'])
