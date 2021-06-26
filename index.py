@@ -1,37 +1,47 @@
 import requests
 from bs4 import BeautifulSoup
+import pandas as pd
+
+# url to scrape data from
+url = 'https://investor.weyerhaeuser.com/events-and-presentations'
 
 # make a request to the site and get it as a string
-markup = requests.get(f'https://investor.weyerhaeuser.com/events-and-presentations').text
+markup = requests.get(url).text
 
 # pass the string to a BeatifulSoup object
 soup = BeautifulSoup(markup, 'html.parser')
-# print(type(soup))
 
+# extract title
 title = soup.select('title')
 site_name = title[0].text
 print('Scraping from: ', site_name)
 
-# events_list = soup.select('.wd_events_list')
-# print(len(events_list))
-# print(events_list)
+# extract ppt date and time
+ppt_date = soup.find_all('div', {'class': 'item_date wd_event_sidebar_item wd_event_date'})
+dates = [i.text for i in ppt_date]
 
-li = soup.find_all('div', {'class': 'item_date wd_event_sidebar_item wd_event_date'})
-print(len(li))
+# for date_time in ppt_date:
+#     print(date_time.get_text())
 
-for item in li:
-    print(item.get_text())
+# extract ppt names and links
+ppt_title = soup.find_all('div', {'class': 'wd_title'})
+print('Total number of ppts: ', len(ppt_title))
 
-# dates = soup.find_all('div', {'class': 'wd_events_month_header'})
-# print('length of year: ', len(dates))
+ppts = list()
+links = list()
 
-# for item in dates:
-#     print(item.get_text())
-
-title = soup.find_all('div', {'class': 'wd_title'})
-print('length of title list: ', len(title))
-
-for item in title:
-    print(item.get_text())
+for item in ppt_title:
+    title = item.text
     title_link = item.findChildren("a" , recursive=False)[0]
-    print('link: ', title_link.attrs['href'])
+    ppts.append(title)
+    links.append(title_link.attrs['href'])
+    # print('link: ', title_link.attrs['href'])
+
+data = []
+
+for i in zip(dates, ppts, links):
+    data.append(i)
+
+df_bs = pd.DataFrame(data, columns=['Date_time', 'Presentation', 'Presentation link'])
+df_bs.set_index('Date_time',inplace=True)
+df_bs.to_csv('InvestorsPpt.csv')
