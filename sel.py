@@ -30,7 +30,14 @@ def extractPptData(markup):
     summary = extractClass(markup, 'div', 'wd_summary', 'text')
     attachment = extractClass(markup, 'div', 'wd_attachment_title', 'href')
 
-    ppt_data = [date, duration, title, link, summary, attachment]
+    ppt_data = { "date": date[1:],
+                    "time" : duration[1:] if duration != 'NA' else duration,
+                    "ppt_title": title,
+                    "ppt_link": link,
+                    "summary": summary,
+                    "attachment": attachment
+    }
+
     return ppt_data
 
 def extractMonthlyData(markup):
@@ -77,8 +84,7 @@ for month in events_month:
     for i in monthly_data:
         info.append(i)
 
-driver.quit()
+print(info[0])
+# print(info)
 
-# store extracted data in csv format
-df_bs = pd.DataFrame(info, columns=['Date', 'Time (if available)', 'Presentation title', 'Presentation link', 'Presentation summary (if available)', 'Attachment (if any)'])
-df_bs.to_csv('InvestorsPpt.csv')
+driver.quit()
