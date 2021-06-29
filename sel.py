@@ -15,14 +15,12 @@ def extractClass(markup, tag_name, class_name, output_type):
     
     if not data:
         return 'NA'
-    print(type(data))
 
     if output_type == 'text':
         return data.get_text()
     else:
-        # print(data)
-        # temp_data = data.get_attribute('href') if data else ''
-        return data
+        find_all_a = data.find_all("a", href=True)
+        return find_all_a[0].get('href', '') if isinstance(find_all_a, list) else ''
 
 def extractPptData(markup):
     date = extractClass(markup, 'div', 'item_date wd_event_sidebar_item wd_event_date', 'text')
@@ -38,15 +36,12 @@ def extractPptData(markup):
 def extractMonthlyData(markup):
     # pass the string to a BeatifulSoup object
     soup = BeautifulSoup(markup, 'lxml')
-
-    print('month is: ', soup.select('.wd_events_month_header')[0].text)
     
     # extract presentations in given month
     item_list = soup.find_all('div', {'class': 'item'})
     monthly_data = []
 
     for item in item_list:
-        print("************************************new presentation*******************************************")
         monthly_data.append(extractPptData(item))
     
     return monthly_data
