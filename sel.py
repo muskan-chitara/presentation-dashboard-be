@@ -10,24 +10,29 @@ driver = webdriver.Chrome(ChromeDriverManager().install())
 driver.get(url)
 driver.implicitly_wait(10)
 
-def extractClass(markup, tag_name, class_name, type):
+def extractClass(markup, tag_name, class_name, output_type):
     data = markup.find(tag_name, {'class': class_name})
-    if type(data) == 'NoneType':
+    
+    if not data:
         return 'NA'
-    elif type != 'text':
-        return data.get_attribute(type)
-    else:
+    print(type(data))
+
+    if output_type == 'text':
         return data.get_text()
+    else:
+        # print(data)
+        # temp_data = data.get_attribute('href') if data else ''
+        return data
 
 def extractPptData(markup):
     date = extractClass(markup, 'div', 'item_date wd_event_sidebar_item wd_event_date', 'text')
     duration = extractClass(markup, 'div', 'item_time wd_event_sidebar_item wd_event_time', 'text')
-    title = extractClass(markup, 'div', 'wd_event_info', 'text')
+    title = extractClass(markup, 'div', 'wd_title', 'text')
     link = extractClass(markup, 'div', 'wd_event_info', 'href')
     summary = extractClass(markup, 'div', 'wd_summary', 'text')
     attachment = extractClass(markup, 'div', 'wd_attachment_title', 'href')
 
-    ppt_data = zip(date, duration, title, link, summary, attachment)
+    ppt_data = [date, duration, title, link, summary, attachment]
     return ppt_data
 
 def extractMonthlyData(markup):
@@ -73,7 +78,9 @@ events_month = [i.get_attribute('innerHTML') for i in driver.find_elements(By.CS
 info = []
 
 for month in events_month:
-    info.append(extractMonthlyData(month))
+    monthly_data = extractMonthlyData(month)
+    for i in monthly_data:
+        info.append(i)
 
 driver.quit()
 
