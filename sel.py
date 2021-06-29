@@ -28,7 +28,7 @@ def extractPptData(markup):
     date = extractClass(markup, 'div', 'item_date wd_event_sidebar_item wd_event_date', 'text')
     duration = extractClass(markup, 'div', 'item_time wd_event_sidebar_item wd_event_time', 'text')
     title = extractClass(markup, 'div', 'wd_title', 'text')
-    link = extractClass(markup, 'div', 'wd_event_info', 'href')
+    link = extractClass(markup, 'div', 'wd_title', 'href')
     summary = extractClass(markup, 'div', 'wd_summary', 'text')
     attachment = extractClass(markup, 'div', 'wd_attachment_title', 'href')
 
