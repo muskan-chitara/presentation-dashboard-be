@@ -55,6 +55,20 @@ def extractPptData(markup):
     link = extractClass(markup, 'div', 'wd_title', 'href')
     summary = extractClass(markup, 'div', 'wd_summary', 'text')
     attachment = extractClass(markup, 'div', 'wd_attachment_title', 'href')
+    ppt_type = 'NA'
+
+    if 'Meeting' in title:
+        ppt_type = 'meeting type'
+    if 'Conference' in title:
+        ppt_type = 'conference type'
+
+    ppt_data = { "date": date[1:],
+                    "duration" : duration[1:] if duration != 'NA' else duration,
+                    "title": title,
+                    "link": link,
+                    "summary": summary,
+                    "attachment": attachment
+    }
 
     ppt_data = { "date": date[1:],
                     "duration" : duration[1:] if duration != 'NA' else duration,
