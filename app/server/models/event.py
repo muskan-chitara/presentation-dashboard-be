@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
@@ -10,6 +11,8 @@ class EventSchema(BaseModel):
     link: str = Field(default="NA")
     summary: str = Field(default="NA")
     attachment: str = Field(default="NA")
+    category: str = Field(default="NA")
+    date_obj: datetime = None
 
     class Config:
         schema_extra = {
@@ -20,6 +23,8 @@ class EventSchema(BaseModel):
                 "link": "https://investor.weyerhaeuser.com/events-and-presentations?item=124",
                 "summary": "Join us on Friday, July 30 for our Q2 2021 earnings results webcast and conference call. Read the release",
                 "attachment": "https://investor.weyerhaeuser.com/events-and-presentations?item=124",
+                "category": "Meeting",
+                "date_obj": "2021-02-26 01:45:00",
             }
             
         }
@@ -46,9 +51,7 @@ class EventSchema(BaseModel):
 
 def ResponseModel(data, message):
     return {
-        "data": [data],
-        "code": 200,
-        "message": message,
+        "data": data
     }
 
 

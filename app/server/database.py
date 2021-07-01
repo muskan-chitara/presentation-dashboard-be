@@ -1,6 +1,7 @@
 import motor.motor_asyncio
 from bson.objectid import ObjectId
 from pymongo import MongoClient
+from datetime import datetime
 
 MONGO_DETAILS = "mongodb://localhost:27017"
 
@@ -20,6 +21,8 @@ def event_helper(event) -> dict:
         "link": event["link"],
         "summary": event["summary"],
         "attachment": event["attachment"],
+        "category": event["category"],
+        "date_obj":event["date_obj"]
     }
 
 
@@ -55,13 +58,34 @@ def extractPptData(markup):
     link = extractClass(markup, 'div', 'wd_title', 'href')
     summary = extractClass(markup, 'div', 'wd_summary', 'text')
     attachment = extractClass(markup, 'div', 'wd_attachment_title', 'href')
+    category = 'NA'
+    date_time_obj = None
+
+    if 'Meeting' in title:
+        category = 'meeting'
+    if 'Conference' in title:
+        category = 'conference'
+
+    print(date)
+    print(duration)
+
+    if(len(date)  > 2 and len(duration) > 2):
+        duration_time = duration.split('-')[0]
+        duration_time = duration_time.split('am')[0] if 'am' in duration_time else duration_time.split('pm')[0]
+        date_obj = date[1:] + ' ' + duration_time[1:]
+        date_obj = date_obj.replace(',' , '')
+        date_time_obj = datetime.strptime(date_obj, '%A %B %d %Y %H:%M')
+        print(date_obj)
+        print(date_time_obj)
 
     ppt_data = { "date": date[1:],
                     "duration" : duration[1:] if duration != 'NA' else duration,
                     "title": title,
                     "link": link,
                     "summary": summary,
-                    "attachment": attachment
+                    "attachment": attachment,
+                    "category": category,
+                    "date_obj": date_time_obj
     }
 
     return ppt_data
@@ -93,12 +117,12 @@ clickOn(past_events)
 
 #load complete page
 load_more = '//*[@id="wd_printable_content"]/div/button'
-while (True):
-    load_button = driver.find_element(By.XPATH, load_more)
-    status = load_button.get_attribute('style')
-    if status == 'display: none;':
-        break
-    clickOn(load_more)
+#while (True):
+#    load_button = driver.find_element(By.XPATH, load_more)
+#    status = load_button.get_attribute('style')
+#    if status == 'display: none;':
+#        break
+#    clickOn(load_more)
 
 # extract data month-wise
 events_month = [i.get_attribute('innerHTML') for i in driver.find_elements(By.CSS_SELECTOR, ".wd_events_month")]
