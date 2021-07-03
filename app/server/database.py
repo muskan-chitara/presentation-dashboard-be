@@ -2,6 +2,7 @@ import motor.motor_asyncio
 from bson.objectid import ObjectId
 from pymongo import MongoClient
 from datetime import datetime
+import pymongo
 
 MONGO_DETAILS = "mongodb://localhost:27017"
 
@@ -22,16 +23,15 @@ def event_helper(event) -> dict:
         "summary": event["summary"],
         "attachment": event["attachment"],
         "category": event["category"],
-        "date_obj":event["date_obj"]
+        "date_obj": event["date_obj"],
+        "event_type": event["event_type"]
     }
-
-
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
-import pandas as pd
 from bs4 import BeautifulSoup
+import time
 
 url = 'https://investor.weyerhaeuser.com/events-and-presentations'
 
@@ -61,22 +61,23 @@ def extractPptData(markup):
     category = 'NA'
     date_time_obj = None
 
+    if attachment != 'NA':
+        attachment =  'https://investor.weyerhaeuser.com' + attachment
+
     if 'Meeting' in title:
         category = 'meeting'
     if 'Conference' in title:
         category = 'conference'
 
-    print(date)
-    print(duration)
-
-    if(len(date)  > 2 and len(duration) > 2):
-        duration_time = duration.split('-')[0]
-        duration_time = duration_time.split('am')[0] if 'am' in duration_time else duration_time.split('pm')[0]
-        date_obj = date[1:] + ' ' + duration_time[1:]
+    if(len(date)  > 2 ):
+        if len(duration) > 2 :
+            duration_time = duration.split('-')[0]
+            duration_time = duration_time.split('am')[0] if 'am' in duration_time else duration_time.split('pm')[0]
+        else:
+            duration_time = " 00:00"
+        date_obj = date[1:].split('-')[0] + ' ' + duration_time[1:]
         date_obj = date_obj.replace(',' , '')
         date_time_obj = datetime.strptime(date_obj, '%A %B %d %Y %H:%M')
-        print(date_obj)
-        print(date_time_obj)
 
     ppt_data = { "date": date[1:],
                     "duration" : duration[1:] if duration != 'NA' else duration,
@@ -85,7 +86,8 @@ def extractPptData(markup):
                     "summary": summary,
                     "attachment": attachment,
                     "category": category,
-                    "date_obj": date_time_obj
+                    "date_obj": date_time_obj,
+                    "event_type":'NA'
     }
 
     return ppt_data
@@ -111,27 +113,44 @@ def extractUsingCSS(attr, css):
     extracted_list = [i.get_attribute(attr) for i in driver.find_elements(By.CSS_SELECTOR, css)]
     return extracted_list
 
+info = []
+
+# extract upcoming events data month-wise
+upcoming_events_month = [i.get_attribute('innerHTML') for i in driver.find_elements(By.CSS_SELECTOR, ".wd_events_month")]
+
+for month in upcoming_events_month:
+    monthly_data = extractMonthlyData(month)
+    for i in monthly_data:
+        i['event_type'] = 'upcoming'
+        info.append(i)
+
 # go to past events
 past_events = '//span[contains(@class, "wd_events_tab_label wd_events_tab_past")]'
 clickOn(past_events)
+time.sleep(5)
+
 
 #load complete page
 load_more = '//*[@id="wd_printable_content"]/div/button'
-#while (True):
-#    load_button = driver.find_element(By.XPATH, load_more)
-#    status = load_button.get_attribute('style')
-#    if status == 'display: none;':
-#        break
-#    clickOn(load_more)
+clickOn(load_more)
+time.sleep(5)
+
+while (True):
+    load_button = driver.find_element(By.XPATH, load_more)
+    status = load_button.get_attribute('style')
+    if status == 'display: none;':
+        break
+    clickOn(load_more)
+    time.sleep(5)
+
 
 # extract data month-wise
-events_month = [i.get_attribute('innerHTML') for i in driver.find_elements(By.CSS_SELECTOR, ".wd_events_month")]
+past_events_month = [i.get_attribute('innerHTML') for i in driver.find_elements(By.CSS_SELECTOR, ".wd_events_month")]
 
-info = []
-
-for month in events_month:
+for month in past_events_month:
     monthly_data = extractMonthlyData(month)
     for i in monthly_data:
+        i['event_type'] = 'past'
         info.append(i)
         
 for i in info:
@@ -162,6 +181,33 @@ def retrieve_event(id: str) -> dict:
     event = event_collection.find_one({"_id": ObjectId(id)})
     if event:
         return event_helper(event)
+
+# Retrieve a events with a matching category
+def retrieve_category(category: str) -> dict:
+    events = []
+    for event in event_collection.find({"category": category}):
+        events.append(event_helper(event))
+    return events
+
+# Retrieve a events with a matching event_type
+def retrieve_event_type(event_type: str) -> dict:
+    events = []
+    for event in event_collection.find({"event_type": event_type}):
+        events.append(event_helper(event))
+    return events
+
+def sort_dsc():
+    events = []
+    for event in event_collection.find().sort('date_obj',pymongo.DESCENDING):
+        events.append(event_helper(event))
+    return events
+
+def sort_asc():
+    events = []
+    for event in event_collection.find().sort('date_obj',pymongo.ASCENDING):
+        events.append(event_helper(event))
+    return events
+
 
 
 # Update a student with a matching ID

@@ -13,6 +13,7 @@ class EventSchema(BaseModel):
     attachment: str = Field(default="NA")
     category: str = Field(default="NA")
     date_obj: datetime = None
+    event_type: str = Field(default="NA")
 
     class Config:
         schema_extra = {
@@ -25,6 +26,7 @@ class EventSchema(BaseModel):
                 "attachment": "https://investor.weyerhaeuser.com/events-and-presentations?item=124",
                 "category": "Meeting",
                 "date_obj": "2021-02-26 01:45:00",
+                "event_type": "past"
             }
             
         }
